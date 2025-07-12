@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Virtueller Gärtner</title>
+      <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+      <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js"></script>
+    </head>
+    <body class="bg-gray-100 p-4">
+      <div id="root"></div>
+      <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const plants = [
+          { name: 'Tomaten', growthRate: 0.5, lightNeed: 8, waterNeed: 5, nutrientNeed: 3, pestSusceptibility: 0.1 },
+          { name: 'Basilikum', growthRate: 0.4, lightNeed: 6, waterNeed: 4, nutrientNeed: 2, pestSusceptibility: 0.05 },
+          { name: 'Lavendel', growthRate: 0.3, lightNeed: 10, waterNeed: 3, nutrientNeed: 1, pestSusceptibility: 0.02 },
+          { name: 'Orchideen', growthRate: 0.2, lightNeed: 5, waterNeed: 6, nutrientNeed: 4, pestSusceptibility: 0.08 },
+          { name: 'Sonnenblumen', growthRate: 0.6, lightNeed: 12, waterNeed: 7, nutrientNeed: 5, pestSusceptibility: 0.15 }
+        ];
+
+        const PlantCard = ({ plant, onCareChange }) => {
+          const [state, setState] = useState('Samen');
+          const [health, setHealth] = useState(100);
+          const [growth, setGrowth] = useState(0);
+
+          useEffect(() => {
+            const interval = setInterval(() => {
+              // Simulate growth and health changes
+              setGrowth(prev => prev + plant.growthRate);
+              setHealth(prev => prev - (Math.random() * 0.1));
+              if (Math.random() < plant.pestSusceptibility) {
+                setHealth(prev => prev - 10);
+              }
+              if (growth > 100) {
+                setState('Keimling');
+              }
+              if (growth > 200) {
+                setState('Wachstumsphase');
+              }
+              if (growth > 300) {
+                setState('Blüte');
+              }
+              if (growth > 400) {
+                setState('Fruchtbildung');
+              }
+              if (growth > 500) {
+                setState('Ruhephase');
+              }
+            }, 10000);
+            return () => clearInterval(interval);
+          }, [growth, health, plant]);
+
+          return (
+            <div class="p-4 bg-white shadow rounded">
+              <h2 class="text-xl font-bold">{plant.name}</h2>
+              <p>Zustand: {state}</p>
+              <p>Gesundheit: {health}%</p>
+              <p>Wachstumsfortschritt: {growth}%</p>
+              <div class="mt-4">
+                <label>Lichtstunden:</label>
+                <input type="range" min="0" max="12" onChange={e => onCareChange('light', e.target.value)} />
+              </div>
+              <div class="mt-4">
+                <label>Wassermenge:</label>
+                <input type="range" min="0" max="10" onChange={e => onCareChange('water', e.target.value)} />
+              </div>
+              <div class="mt-4">
+                <label>Düngergabe:</label>
+                <input type="range" min="0" max="10" onChange={e => onCareChange('fertilizer', e.target.value)} />
+              </div>
+            </div>
+          );
+        };
+
+        const App = () => {
+          const [selectedPlants, setSelectedPlants] = useState([]);
+
+          const handleCareChange = (plantIndex, careType, value) => {
+            const newPlants = [...selectedPlants];
+            newPlants[plantIndex][careType] = value;
+            setSelectedPlants(newPlants);
+          };
+
+          const addPlant = (plant) => {
+            if (selectedPlants.length < 5) {
+              setSelectedPlants([...selectedPlants, plant]);
+            }
+          };
+
+          return (
+            <div>
+              <h1 class="text-3xl font-bold mb-4">Virtueller Gärtner</h1>
+              <div class="mb-4">
+                <h2 class="text-2xl font-bold">Pflanzenauswahl</h2>
+                <select onChange={e => addPlant(plants[e.target.value])}>
+                  <option value="">Wähle eine Pflanze</option>
+                  {plants.map((plant, index) => (
+                    <option key={index} value={index}>{plant.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {selectedPlants.map((plant, index) => (
+                  <PlantCard key={index} plant={plant} onCareChange={(careType, value) => handleCareChange(index, careType, value)} />
+                ))}
+              </div>
+            </div>
+          );
+        };
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+      </script>
+    </body>
+    </html>
